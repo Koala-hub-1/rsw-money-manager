@@ -34,16 +34,6 @@ export default function AdminDashboard() {
         </a>
 
         <a
-          href="/import"
-          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:border-blue-300 hover:shadow-md transition-all"
-        >
-          <h2 className="text-lg font-semibold text-gray-900">CSV取込</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            銀行・カード明細の取り込み
-          </p>
-        </a>
-
-        <a
           href="/alerts"
           className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:border-blue-300 hover:shadow-md transition-all"
         >

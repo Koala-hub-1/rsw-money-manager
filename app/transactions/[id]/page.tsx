@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import type { Transaction, Account, Receipt } from "@/lib/types";
 import { CATEGORIES } from "@/lib/types";
 import CategoryBadge from "@/components/CategoryBadge";

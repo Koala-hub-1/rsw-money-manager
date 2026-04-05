@@ -66,9 +66,6 @@ export default function Navigation() {
           <a href="/admin" className={linkClass("/admin")}>
             管理
           </a>
-          <a href="/import" className={linkClass("/import")}>
-            CSV取込
-          </a>
         </>
       )}
 

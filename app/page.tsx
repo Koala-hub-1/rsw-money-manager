@@ -31,63 +31,68 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function fetchData() {
-      const supabase = createSupabaseBrowser();
+      try {
+        const supabase = createSupabaseBrowser();
 
-      const [residentsRes, checkoutsRes, alertsRes] = await Promise.all([
-        supabase
-          .from("residents")
-          .select("*")
-          .eq("status", "active")
-          .order("name"),
-        supabase
-          .from("card_checkouts")
-          .select("*, accounts(label, residents(name))")
-          .is("checked_in_at", null)
-          .order("checked_out_at", { ascending: false }),
-        supabase
-          .from("alerts")
-          .select("id", { count: "exact", head: true })
-          .eq("is_resolved", false),
-      ]);
-
-      const residents = residentsRes.data ?? [];
-      setUnresolvedAlertCount(alertsRes.count ?? 0);
-
-      // 未返却カード
-      const checkouts = (checkoutsRes.data ?? []).map((co) => ({
-        ...co,
-        accountLabel:
-          (co.accounts as { label: string } | null)?.label ?? "カード",
-        residentName:
-          (co.accounts as { residents?: { name: string } } | null)?.residents
-            ?.name ?? "不明",
-      }));
-      setActiveCheckouts(checkouts);
-
-      const result: ResidentData[] = [];
-      for (const resident of residents) {
-        const [accountsRes, transactionsRes] = await Promise.all([
+        const [residentsRes, checkoutsRes, alertsRes] = await Promise.all([
           supabase
-            .from("accounts")
+            .from("residents")
             .select("*")
-            .eq("resident_id", resident.id),
+            .eq("status", "active")
+            .order("name"),
           supabase
-            .from("transactions")
-            .select("*")
-            .eq("resident_id", resident.id)
-            .order("transaction_date", { ascending: false })
-            .limit(3),
+            .from("card_checkouts")
+            .select("*, accounts(label, residents(name))")
+            .is("checked_in_at", null)
+            .order("checked_out_at", { ascending: false }),
+          supabase
+            .from("alerts")
+            .select("id", { count: "exact", head: true })
+            .eq("is_resolved", false),
         ]);
 
-        result.push({
-          resident,
-          accounts: accountsRes.data ?? [],
-          recentTransactions: transactionsRes.data ?? [],
-        });
-      }
+        const residents = residentsRes.data ?? [];
+        setUnresolvedAlertCount(alertsRes.count ?? 0);
 
-      setData(result);
-      setLoading(false);
+        // 未返却カード
+        const checkouts = (checkoutsRes.data ?? []).map((co) => ({
+          ...co,
+          accountLabel:
+            (co.accounts as { label: string } | null)?.label ?? "カード",
+          residentName:
+            (co.accounts as { residents?: { name: string } } | null)?.residents
+              ?.name ?? "不明",
+        }));
+        setActiveCheckouts(checkouts);
+
+        const result: ResidentData[] = [];
+        for (const resident of residents) {
+          const [accountsRes, transactionsRes] = await Promise.all([
+            supabase
+              .from("accounts")
+              .select("*")
+              .eq("resident_id", resident.id),
+            supabase
+              .from("transactions")
+              .select("*")
+              .eq("resident_id", resident.id)
+              .order("transaction_date", { ascending: false })
+              .limit(3),
+          ]);
+
+          result.push({
+            resident,
+            accounts: accountsRes.data ?? [],
+            recentTransactions: transactionsRes.data ?? [],
+          });
+        }
+
+        setData(result);
+      } catch (e) {
+        console.error("Dashboard fetch error:", e);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchData();

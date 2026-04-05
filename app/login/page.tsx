@@ -15,45 +15,47 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const supabase = createSupabaseBrowser();
+    try {
+      const supabase = createSupabaseBrowser();
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      const { data, error: authError } =
+        await supabase.auth.signInWithPassword({ email, password });
 
-    if (authError) {
-      setError("メールアドレスまたはパスワードが正しくありません");
+      if (authError) {
+        setError(`認証エラー: ${authError.message}`);
+        return;
+      }
+
+      if (!data.user) {
+        setError("ログインに失敗しました");
+        return;
+      }
+
+      // ロールに応じてリダイレクト
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      const role = (profile?.role as UserRole) ?? "rsw";
+
+      switch (role) {
+        case "admin":
+          window.location.href = "/admin";
+          break;
+        case "family":
+        case "supervisor":
+          window.location.href = "/portal";
+          break;
+        default:
+          window.location.href = "/";
+          break;
+      }
+    } catch (err) {
+      setError(`エラー: ${err}`);
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    if (!data.user) {
-      setError("ログインに失敗しました");
-      setLoading(false);
-      return;
-    }
-
-    // ロールに応じてリダイレクト
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
-
-    const role = (profile?.role as UserRole) ?? "rsw";
-
-    switch (role) {
-      case "admin":
-        window.location.href = "/admin";
-        break;
-      case "family":
-      case "supervisor":
-        window.location.href = "/portal";
-        break;
-      default:
-        window.location.href = "/";
-        break;
     }
   }
 

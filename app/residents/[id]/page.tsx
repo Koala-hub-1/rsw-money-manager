@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import type { Resident, Account, Transaction, AccountType } from "@/lib/types";
 import { CATEGORIES } from "@/lib/types";
 import TransactionList from "@/components/TransactionList";
@@ -22,10 +22,7 @@ export default function ResidentDetail() {
   const [loading, setLoading] = useState(true);
 
   // フィルタ
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  });
+  const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState<
     AccountType | "all"
   >("all");
@@ -33,20 +30,43 @@ export default function ResidentDetail() {
 
   useEffect(() => {
     async function fetchData() {
-      const [residentRes, accountsRes, txRes] = await Promise.all([
-        supabase.from("residents").select("*").eq("id", residentId).single(),
-        supabase.from("accounts").select("*").eq("resident_id", residentId),
-        supabase
-          .from("transactions")
-          .select("*")
-          .eq("resident_id", residentId)
-          .order("transaction_date", { ascending: false }),
-      ]);
+      try {
+        console.log("Detail: fetching for", residentId);
+        const [residentRes, accountsRes, txRes] = await Promise.all([
+          supabase.from("residents").select("*").eq("id", residentId).single(),
+          supabase.from("accounts").select("*").eq("resident_id", residentId),
+          supabase
+            .from("transactions")
+            .select("*")
+            .eq("resident_id", residentId)
+            .order("transaction_date", { ascending: false }),
+        ]);
 
-      setResident(residentRes.data);
-      setAccounts(accountsRes.data ?? []);
-      setTransactions(txRes.data ?? []);
-      setLoading(false);
+        console.log("Detail: resident", residentRes.data, residentRes.error);
+        console.log("Detail: accounts", accountsRes.data?.length, accountsRes.error);
+        console.log("Detail: transactions", txRes.data?.length, txRes.error);
+
+        setResident(residentRes.data);
+        setAccounts(accountsRes.data ?? []);
+        const txData = txRes.data ?? [];
+        setTransactions(txData);
+
+        // 最新月をデフォルト選択
+        if (txData.length > 0) {
+          const latestMonth = txData
+            .map((tx: Transaction) => tx.transaction_date.slice(0, 7))
+            .sort()
+            .reverse()[0];
+          setSelectedMonth(latestMonth);
+        } else {
+          const now = new Date();
+          setSelectedMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+        }
+      } catch (e) {
+        console.error("Detail: fetch error", e);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchData();
