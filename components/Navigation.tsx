@@ -54,6 +54,9 @@ export default function Navigation() {
               </span>
             )}
           </a>
+          <a href="/receipts" className={linkClass("/receipts")}>
+            レシート
+          </a>
         </>
       )}
 
