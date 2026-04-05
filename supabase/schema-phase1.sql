@@ -83,10 +83,30 @@ create table contacts (
   created_at timestamptz default now()
 );
 
+-- 招待
+create table invitations (
+  id uuid primary key default gen_random_uuid(),
+  resident_id uuid references residents(id) not null,
+  email text not null,
+  role text not null check (role in ('family', 'supervisor')),
+  invited_by uuid references auth.users(id) not null,
+  token text unique not null,
+  accepted_at timestamptz,
+  expires_at timestamptz not null,
+  created_at timestamptz default now()
+);
+
 -- Phase 1用インデックス
 create index idx_card_checkouts_active on card_checkouts(card_id) where checked_in_at is null;
 create index idx_alerts_unresolved on alerts(resident_id) where is_resolved = false;
 create index idx_contacts_user on contacts(user_id);
+create index idx_invitations_token on invitations(token);
+
+-- RLS有効化: invitations
+alter table invitations enable row level security;
+
+create policy "admin_all_invitations" on invitations for all
+  using (get_user_role() = 'admin');
 
 -- residents テーブルに Phase 1 用カラムを追加
 alter table residents add column if not exists birth_date date;
