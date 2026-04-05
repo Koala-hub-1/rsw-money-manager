@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import Navigation from "@/components/Navigation";
+import UserMenu from "@/components/UserMenu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,11 +34,14 @@ export default function RootLayout({
         <AuthProvider>
           <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
             <div className="mx-auto max-w-5xl px-4 py-3">
-              <div className="flex items-center gap-4">
-                <a href="/" className="text-lg font-bold text-gray-900 shrink-0">
-                  RSW金銭管理
-                </a>
-                <Navigation />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <a href="/" className="text-lg font-bold text-gray-900 shrink-0">
+                    RSW金銭管理
+                  </a>
+                  <Navigation />
+                </div>
+                <UserMenu />
               </div>
             </div>
           </header>
